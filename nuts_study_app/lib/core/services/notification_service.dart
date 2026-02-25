@@ -38,7 +38,7 @@ class NotificationService {
     if (scheduledDate.isBefore(tz.TZDateTime.now(tz.local))) return;
 
     await _notifications.zonedSchedule(
-      id, "Recordatorio de Estudio", title, scheduledDate,
+      id, "RECORDATORIO!!!!", title, scheduledDate,
       const NotificationDetails(android: AndroidNotificationDetails('RECORDATORIO!!!!', 'Recuerda', importance: Importance.max, priority: Priority.high)),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,

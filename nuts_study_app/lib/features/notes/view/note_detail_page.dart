@@ -46,12 +46,26 @@ class _NoteDetailPageState extends State<NoteDetailPage> {
         child: Column(
           children: [
             TextField(
+              autocorrect: true,
+              enableSuggestions: true,
+              textCapitalization: TextCapitalization.sentences,
+              smartDashesType: SmartDashesType.enabled,
+              smartQuotesType: SmartQuotesType.enabled,
+              keyboardType: TextInputType.text,
               controller: titleCtrl,
+              
               decoration: const InputDecoration(labelText: 'Título'),
             ),
             const SizedBox(height: 12),
             Expanded(
               child: TextField(
+                autocorrect: true,
+              enableSuggestions: true,
+              textCapitalization: TextCapitalization.sentences,
+              smartDashesType: SmartDashesType.enabled,
+              smartQuotesType: SmartQuotesType.enabled,
+              keyboardType: TextInputType.text,
+              
                 controller: contentCtrl,
                 maxLines: null,
                 expands: true,

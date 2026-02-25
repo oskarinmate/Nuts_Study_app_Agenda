@@ -68,4 +68,9 @@ class ListItemsProvider extends ChangeNotifier {
     _items = [];
     notifyListeners();
   }
+
+  void clearItems() {
+  _items = []; // O como se llame tu lista interna
+  notifyListeners();
+}
 }

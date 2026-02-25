@@ -146,7 +146,7 @@ class _NotesPageState extends State<NotesPage> {
           );
         },
         backgroundColor: const Color.fromARGB(255, 0, 224, 19),
-        child: const Icon(Icons.add),
+        child: const Icon(Icons.note_alt),
       ),
     );
   }

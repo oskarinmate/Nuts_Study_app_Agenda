@@ -1,37 +1,70 @@
 import 'package:flutter/material.dart';
+import 'package:nuts_study_app/core/database/database_helper.dart';
+import 'package:nuts_study_app/features/calendar/model/event_model.dart';
 import '../../../core/services/notification_service.dart';
 
-class CalendarEvent {
-  final int id;
-  final String title;
-  final DateTime date;
-  CalendarEvent({required this.id, required this.title, required this.date});
-}
-
 class CalendarProvider extends ChangeNotifier {
-  final Map<DateTime, List<CalendarEvent>> _events = {};
+  // Ahora usamos una lista plana, sqflite la prefiere así
+  List<Event> _allEvents = [];
 
-  List<CalendarEvent> eventsForDay(DateTime day) {
-    // Normalizamos la fecha (solo año, mes, día) para usarla como llave
-    final dateKey = DateTime(day.year, day.month, day.day);
-    return _events[dateKey] ?? [];
+  CalendarProvider() {
+    loadEvents(); // Cargamos los datos de SQLite al iniciar
   }
 
-  Future<void> addEvent(DateTime fullDate, String title) async {
-    final int id = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-    final newEvent = CalendarEvent(id: id, title: title, date: fullDate);
+  // Filtrar eventos para la vista del calendario
+  List<Event> eventsForDay(DateTime day) {
+    return _allEvents.where((e) =>
+        e.date.year == day.year &&
+        e.date.month == day.month &&
+        e.date.day == day.day).toList();
+  }
 
-    final dateKey = DateTime(fullDate.year, fullDate.month, fullDate.day);
-    _events.putIfAbsent(dateKey, () => []).add(newEvent);
-
-    await NotificationService.scheduleNotification(id: id, title: title, date: fullDate);
+  // CARGAR DE LA BASE DE DATOS
+  Future<void> loadEvents() async {
+    _allEvents = await DatabaseHelper.getEvents(); // Método que añadimos al Helper
     notifyListeners();
   }
 
-  Future<void> deleteEvent(CalendarEvent event) async {
-    final dateKey = DateTime(event.date.year, event.date.month, event.date.day);
-    _events[dateKey]?.removeWhere((e) => e.id == event.id);
-    await NotificationService.cancelNotification(event.id);
+  // AÑADIR Y GUARDAR
+  Future<void> addEvent(DateTime fullDate, String title) async {
+    // Generamos un ID único como String (compatible con tu tabla events)
+    final String id = DateTime.now().millisecondsSinceEpoch.toString();
+    
+    final newEvent = Event(
+      id: id, 
+      title: title, 
+      date: fullDate
+    );
+
+    // 1. Guardar en SQLite
+    await DatabaseHelper.insertEvent(newEvent);
+    
+    // 2. Actualizar memoria RAM
+    _allEvents.add(newEvent);
+
+    // 3. Programar Notificación (convertimos el ID a int para la notificación)
+    await NotificationService.scheduleNotification(
+      id: int.parse(id.substring(id.length - 8)), // Tomamos los últimos 8 dígitos
+      title: title, 
+      date: fullDate
+    );
+    
+    notifyListeners();
+  }
+
+  // ELIMINAR DE LA BASE DE DATOS
+  Future<void> deleteEvent(Event event) async {
+    // 1. Eliminar de SQLite
+    await DatabaseHelper.deleteEvent(event.id);
+    
+    // 2. Eliminar de memoria RAM
+    _allEvents.removeWhere((e) => e.id == event.id);
+    
+    // 3. Cancelar Notificación
+    await NotificationService.cancelNotification(
+      int.parse(event.id.substring(event.id.length - 8))
+    );
+    
     notifyListeners();
   }
 }

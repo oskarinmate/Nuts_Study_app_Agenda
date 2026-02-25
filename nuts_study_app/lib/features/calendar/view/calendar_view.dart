@@ -67,6 +67,12 @@ class _CalendarPageState extends State<CalendarPage> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               child: TextField(
+                autocorrect: true, // Activa el motor de corrección
+                enableSuggestions: true, // Muestra la barra de sugerencias sobre el teclado
+                textCapitalization: TextCapitalization.sentences, // Corrige mayúsculas automáticamente
+                smartDashesType: SmartDashesType.enabled,
+                smartQuotesType: SmartQuotesType.enabled,
+                keyboardType: TextInputType.text,
                 controller: _titleController,
                 autofocus: true,
                 decoration: const InputDecoration(
@@ -154,6 +160,7 @@ class _CalendarPageState extends State<CalendarPage> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
+        backgroundColor: const Color.fromARGB(255, 0, 224, 19),
         onPressed: _showAddEventDialog,
         child: const Icon(Icons.add_alarm),
       ),
