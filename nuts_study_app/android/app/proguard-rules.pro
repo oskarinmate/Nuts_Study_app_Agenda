@@ -1,0 +1,4 @@
+-keep class com.dexterous.flutterlocalnotifications.** { *; }
+-keep class com.google.type.DateTime { *; }
+-keep class com.google.type.Date { *; }
+-keep class com.google.type.TimeOfDay { *; }

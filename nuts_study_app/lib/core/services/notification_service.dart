@@ -11,24 +11,35 @@ class NotificationService {
   static Future<void> init() async {
     tz.initializeTimeZones();
     try {
-      // FIX: Convertimos a String para evitar error de tipo
       final String timeZoneName = (await FlutterTimezone.getLocalTimezone()).toString();
       tz.setLocalLocation(tz.getLocation(timeZoneName));
     } catch (e) {
       tz.setLocalLocation(tz.getLocation('America/Mexico_City'));
     }
 
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    // 🚩 CAMBIO CLAVE: Cambiamos ic_launcher por launcher_icon
+    // Si usaste flutter_launcher_icons, el nombre estándar es launcher_icon
+    const androidSettings = AndroidInitializationSettings('@mipmap/launcher_icon');
+    
     await _notifications.initialize(
-      const InitializationSettings(android: androidSettings, iOS: DarwinInitializationSettings()),
+      const InitializationSettings(
+        android: androidSettings, 
+        iOS: DarwinInitializationSettings()
+      ),
     );
 
     if (Platform.isAndroid) {
       final androidPlugin = _notifications.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+      
+      // Pedimos los permisos aquí mismo
       await androidPlugin?.requestNotificationsPermission();
       await androidPlugin?.requestExactAlarmsPermission();
       
-      const channel = AndroidNotificationChannel('RECORDATORIO!!!!', 'Recuerda', importance: Importance.max);
+      const channel = AndroidNotificationChannel(
+        'RECORDATORIO!!!!', 
+        'Recuerda', 
+        importance: Importance.max
+      );
       await androidPlugin?.createNotificationChannel(channel);
     }
   }
@@ -38,8 +49,20 @@ class NotificationService {
     if (scheduledDate.isBefore(tz.TZDateTime.now(tz.local))) return;
 
     await _notifications.zonedSchedule(
-      id, "RECORDATORIO!!!!", title, scheduledDate,
-      const NotificationDetails(android: AndroidNotificationDetails('RECORDATORIO!!!!', 'Recuerda', importance: Importance.max, priority: Priority.high)),
+      id, 
+      "RECORDATORIO!!!!", 
+      title, 
+      scheduledDate,
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'RECORDATORIO!!!!', 
+          'Recuerda', 
+          importance: Importance.max, 
+          priority: Priority.high,
+          // 🚩 TAMBIÉN AQUÍ: Aseguramos que use el nuevo icono
+          icon: '@mipmap/launcher_icon', 
+        )
+      ),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
     );
