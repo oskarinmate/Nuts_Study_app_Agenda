@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nuts_study_app/features/calendar/view/calendar_view.dart';
 import 'package:nuts_study_app/features/lists/view/list_page.dart';
 import 'package:nuts_study_app/features/notes/provider/notes_provider.dart';
 import 'package:provider/provider.dart';
@@ -25,6 +26,7 @@ class _HomePageState extends State<HomePage> {
     _pages = const [
       NotesPage(),
       ListsPage(),
+      CalendarPage(),
     ];
 
     // 🔥 CARGA GLOBAL AL INICIAR LA APP
@@ -39,7 +41,7 @@ Widget build(BuildContext context) {
   return Scaffold(
     body: _pages[_currentIndex],
     appBar: AppBar(
-      title: Text(_currentIndex == 0 ? 'Mis notas' : 'Mis listas'),
+      title: Text(_currentIndex == 0 ? 'Mis notas' : _currentIndex == 1 ? 'Mis listas' : 'Calendario'),
       backgroundColor: const Color.fromARGB(255, 4, 107, 67), // 🌈 Color más vivo
       foregroundColor: const Color.fromARGB(255, 255, 255, 255),
     ),
@@ -61,6 +63,10 @@ Widget build(BuildContext context) {
         BottomNavigationBarItem(
           icon: Icon(Icons.checklist),
           label: 'Listas',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.calendar_month),
+          label: 'Calendario',
         ),
       ],
     ),
