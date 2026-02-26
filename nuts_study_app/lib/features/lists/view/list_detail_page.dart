@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:nuts_study_app/core/services/pdf_service.dart';
 import 'package:provider/provider.dart';
 
 import '../models/note_list_model.dart';
 import '../providers/list_provider.dart';
 import '../providers/list_items_provider.dart';
+
 
 class ListDetailPage extends StatefulWidget {
   final NoteList? list;
@@ -31,14 +33,12 @@ class _ListDetailPageState extends State<ListDetailPage> {
         context.read<ListItemsProvider>().loadItems(listId!);
       });
     } else {
-      // Si es nueva, nos aseguramos de que la lista de items esté limpia
       Future.microtask(() {
         context.read<ListItemsProvider>().clearItems(); 
       });
     }
   }
 
-  // Función de guardado optimizada
   Future<void> _saveList() async {
     final title = _titleController.text.trim().isEmpty 
         ? "Nueva Lista" 
@@ -58,8 +58,6 @@ class _ListDetailPageState extends State<ListDetailPage> {
   }
 
   void _addItemDialog() async {
-    // IMPORTANTE: Si es nueva y el usuario intenta añadir un item, 
-    // guardamos la lista primero para obtener un listId
     if (isNew) {
       await _saveList();
     }
@@ -86,13 +84,10 @@ class _ListDetailPageState extends State<ListDetailPage> {
           ElevatedButton(
             onPressed: () {
               if (controller.text.trim().isEmpty) return;
-              
-              // Ahora listId ya no es nulo porque _saveList se ejecutó arriba
               context.read<ListItemsProvider>().addItem(
                     listId!,
                     controller.text.trim(),
                   );
-
               Navigator.pop(context);
             },
             child: const Text('Agregar'),
@@ -110,14 +105,25 @@ class _ListDetailPageState extends State<ListDetailPage> {
       appBar: AppBar(
         title: Text(isNew ? 'Nueva lista' : 'Editar lista'),
         actions: [
-          if (!isNew)
+          if (!isNew) ...[
+            // 🔍 BOTÓN DE EXPORTAR PDF PARA LISTAS
+            IconButton(
+              icon: const Icon(Icons.picture_as_pdf),
+              tooltip: 'Exportar lista a PDF',
+              onPressed: () {
+                PdfService.exportList(
+                  _titleController.text, 
+                  itemsProvider.items
+                );
+              },
+            ),
             IconButton(
               icon: const Icon(Icons.delete),
               onPressed: _confirmDelete,
             ),
+          ],
         ],
       ),
-      // El botón flotante ahora siempre está disponible
       floatingActionButton: FloatingActionButton(
         onPressed: _addItemDialog,
         child: const Icon(Icons.add),
@@ -146,18 +152,23 @@ class _ListDetailPageState extends State<ListDetailPage> {
                         final item = itemsProvider.items[index];
                         return CheckboxListTile(
                           value: item.isDone,
-                          title: Text(item.text),
+                          title: Text(
+                            item.text,
+                            style: TextStyle(
+                              decoration: item.isDone 
+                                  ? TextDecoration.lineThrough 
+                                  : null,
+                              color: item.isDone ? Colors.grey : Colors.black,
+                            ),
+                          ),
                           onChanged: (_) => itemsProvider.toggleItem(item),
                         );
                       },
                     ),
             ),
             const SizedBox(height: 16),
-            
-            // BOTÓN GUARDAR ABAJO ESTILO NOTAS
             SizedBox(
-              width: double.infinity,
-              height: 50,
+              
               child: ElevatedButton(
                 onPressed: () async {
                   await _saveList();

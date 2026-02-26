@@ -1,8 +1,11 @@
 // features/notes/view/note_detail_page.dart
 import 'package:flutter/material.dart';
+import 'package:nuts_study_app/core/services/pdf_service.dart';
 import 'package:provider/provider.dart';
 import '../../../data/models/note_model.dart';
 import '../provider/notes_provider.dart';
+// IMPORTANTE: Asegúrate de que la ruta a tu PdfService sea correcta
+
 
 class NoteDetailPage extends StatefulWidget {
   final Note? note;
@@ -34,6 +37,15 @@ class _NoteDetailPageState extends State<NoteDetailPage> {
         title: Text(isEditing ? 'Editar nota' : 'Nueva nota'),
         actions: isEditing
             ? [
+                // 📄 BOTÓN PARA EXPORTAR A PDF
+                IconButton(
+                  icon: const Icon(Icons.picture_as_pdf),
+                  tooltip: 'Exportar a PDF',
+                  onPressed: () {
+                    // Usamos el servicio que creamos
+                    PdfService.exportNote(widget.note!);
+                  },
+                ),
                 IconButton(
                   icon: const Icon(Icons.delete),
                   onPressed: () => _showDeleteDialog(context),
@@ -53,19 +65,17 @@ class _NoteDetailPageState extends State<NoteDetailPage> {
               smartQuotesType: SmartQuotesType.enabled,
               keyboardType: TextInputType.text,
               controller: titleCtrl,
-              
               decoration: const InputDecoration(labelText: 'Título'),
             ),
             const SizedBox(height: 12),
             Expanded(
               child: TextField(
                 autocorrect: true,
-              enableSuggestions: true,
-              textCapitalization: TextCapitalization.sentences,
-              smartDashesType: SmartDashesType.enabled,
-              smartQuotesType: SmartQuotesType.enabled,
-              keyboardType: TextInputType.text,
-              
+                enableSuggestions: true,
+                textCapitalization: TextCapitalization.sentences,
+                smartDashesType: SmartDashesType.enabled,
+                smartQuotesType: SmartQuotesType.enabled,
+                keyboardType: TextInputType.text,
                 controller: contentCtrl,
                 maxLines: null,
                 expands: true,
@@ -97,7 +107,7 @@ class _NoteDetailPageState extends State<NoteDetailPage> {
     );
   }
 
-    void _showDeleteDialog(BuildContext context) {
+  void _showDeleteDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -127,5 +137,4 @@ class _NoteDetailPageState extends State<NoteDetailPage> {
       ),
     );
   }
-
 }
