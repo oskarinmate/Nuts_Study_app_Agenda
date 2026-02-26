@@ -3,12 +3,14 @@ class Note {
   final String title;
   final String content;
   final DateTime createdAt;
+  final int? folderId; // 🔥 Nuevo campo para la relación
 
   Note({
     this.id,
     required this.title,
     required this.content,
     required this.createdAt,
+    this.folderId, // Opcional
   });
 
   Map<String, dynamic> toMap() {
@@ -17,6 +19,7 @@ class Note {
       'title': title,
       'content': content,
       'createdAt': createdAt.toIso8601String(),
+      'folderId': folderId, // 🔥 Se guarda en la DB
     };
   }
 
@@ -26,6 +29,7 @@ class Note {
       title: map['title'],
       content: map['content'],
       createdAt: DateTime.parse(map['createdAt']),
+      folderId: map['folderId'], // 🔥 Se recupera de la DB
     );
   }
 }

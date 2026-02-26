@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart'; // Importante para el selector de rodillo
+import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 import '../providers/calendar_provider.dart';
+// ✅ IMPORTA AQUÍ TU BUSCADOR (Ajusta la ruta si es necesario)
+import 'event_search_delegate.dart'; 
 
 class CalendarPage extends StatefulWidget {
   const CalendarPage({super.key});
@@ -16,7 +18,6 @@ class _CalendarPageState extends State<CalendarPage> {
   DateTime _focusedDay = DateTime.now();
   final TextEditingController _titleController = TextEditingController();
 
-  // FIX: Selector de hora estilo rodillo (Evita errores de BoxConstraints y asegura AM/PM)
   void _showAddEventDialog() {
     DateTime temporaryDateTime = DateTime(
       _selectedDay.year,
@@ -34,7 +35,7 @@ class _CalendarPageState extends State<CalendarPage> {
       ),
       builder: (context) => Container(
         padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom, // Ajuste para el teclado
+          bottom: MediaQuery.of(context).viewInsets.bottom,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -46,13 +47,12 @@ class _CalendarPageState extends State<CalendarPage> {
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
-            // SELECTOR DE HORA (RODILLO) - 1 a 12 con AM/PM
             SizedBox(
               height: 200,
               child: CupertinoDatePicker(
                 mode: CupertinoDatePickerMode.time,
                 initialDateTime: temporaryDateTime,
-                use24hFormat: false, // FUERZA EL FORMATO 1 a 12 con AM/PM
+                use24hFormat: false,
                 onDateTimeChanged: (DateTime newDateTime) {
                   temporaryDateTime = DateTime(
                     _selectedDay.year,
@@ -67,12 +67,9 @@ class _CalendarPageState extends State<CalendarPage> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               child: TextField(
-                autocorrect: true, // Activa el motor de corrección
-                enableSuggestions: true, // Muestra la barra de sugerencias sobre el teclado
-                textCapitalization: TextCapitalization.sentences, // Corrige mayúsculas automáticamente
-                smartDashesType: SmartDashesType.enabled,
-                smartQuotesType: SmartQuotesType.enabled,
-                keyboardType: TextInputType.text,
+                autocorrect: true,
+                enableSuggestions: true,
+                textCapitalization: TextCapitalization.sentences,
                 controller: _titleController,
                 autofocus: true,
                 decoration: const InputDecoration(
@@ -93,12 +90,10 @@ class _CalendarPageState extends State<CalendarPage> {
                   ElevatedButton(
                     onPressed: () {
                       if (_titleController.text.isEmpty) return;
-                      
                       context.read<CalendarProvider>().addEvent(
-                        temporaryDateTime,
-                        _titleController.text,
-                      );
-                      
+                            temporaryDateTime,
+                            _titleController.text,
+                          );
                       _titleController.clear();
                       Navigator.pop(context);
                     },
@@ -119,7 +114,33 @@ class _CalendarPageState extends State<CalendarPage> {
     final events = provider.eventsForDay(_selectedDay);
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Calendario")),
+      appBar: AppBar(
+        title: const Text("Calendario"),
+        // ✅ BOTÓN DE BÚSQUEDA AGREGADO
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () async {
+            // 1. Ahora usamos 'allEvents' que es el getter que creamos en el Provider
+            final eventsList = provider.allEvents; 
+            
+            // 2. Abrimos el buscador pasándole la lista directamente
+            final selectedEvent = await showSearch(
+              context: context,
+              delegate: EventSearchDelegate(eventsList),
+            );
+
+            // 3. Si seleccionó un evento, movemos el calendario a esa fecha
+            if (selectedEvent != null) {
+              setState(() {
+                _selectedDay = selectedEvent.date;
+                _focusedDay = selectedEvent.date;
+              });
+            }
+          },
+          ),
+        ],
+      ),
       body: Column(
         children: [
           TableCalendar(
@@ -129,7 +150,10 @@ class _CalendarPageState extends State<CalendarPage> {
             focusedDay: _focusedDay,
             selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
             eventLoader: provider.eventsForDay,
-            onDaySelected: (s, f) => setState(() { _selectedDay = s; _focusedDay = f; }),
+            onDaySelected: (s, f) => setState(() {
+              _selectedDay = s;
+              _focusedDay = f;
+            }),
             headerStyle: const HeaderStyle(formatButtonVisible: false, titleCentered: true),
           ),
           const Divider(),
@@ -147,7 +171,6 @@ class _CalendarPageState extends State<CalendarPage> {
                           e.title,
                           style: TextStyle(decoration: isPast ? TextDecoration.lineThrough : null),
                         ),
-                        // Formato hh:mm a (h minúsculas = 1-12, a = AM/PM)
                         subtitle: Text(DateFormat('hh:mm a').format(e.date)),
                         trailing: IconButton(
                           icon: const Icon(Icons.delete, color: Colors.red),

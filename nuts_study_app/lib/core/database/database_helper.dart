@@ -1,11 +1,11 @@
 import 'package:nuts_study_app/features/calendar/model/event_model.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
-// Asegúrate de importar tu modelo Event
 
 class DatabaseHelper {
   static Database? _db;
 
+  // Getter estático: Compatible con todos los repositorios
   static Future<Database> get database async {
     if (_db != null) return _db!;
 
@@ -19,32 +19,40 @@ class DatabaseHelper {
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
-          // Si el usuario viene de la v1, creamos la tabla que falta
           await db.execute('''
             CREATE TABLE IF NOT EXISTS events(
-              id TEXT PRIMARY KEY,
-              title TEXT,
-              date TEXT
+              id TEXT PRIMARY KEY, title TEXT, date TEXT
             )
           ''');
         }
       },
     );
-
     return _db!;
   }
 
   static Future<void> _createTables(Database db) async {
-    // Tablas existentes...
+    // 1. Materias (Folders)
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS folders (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        colorValue INTEGER NOT NULL
+      )
+    ''');
+
+    // 2. Notas (con relación a materias)
     await db.execute('''
       CREATE TABLE IF NOT EXISTS notes(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT,
         content TEXT,
-        createdAt TEXT
+        createdAt TEXT,
+        folderId INTEGER,
+        FOREIGN KEY (folderId) REFERENCES folders (id) ON DELETE SET NULL
       )
     ''');
 
+    // 3. Listas
     await db.execute('''
       CREATE TABLE IF NOT EXISTS lists(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -53,6 +61,7 @@ class DatabaseHelper {
       )
     ''');
 
+    // 4. Ítems de listas
     await db.execute('''
       CREATE TABLE IF NOT EXISTS list_items(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -62,7 +71,7 @@ class DatabaseHelper {
       )
     ''');
 
-    // NUEVA TABLA PARA EVENTOS/RECORDATORIOS
+    // 5. Eventos
     await db.execute('''
       CREATE TABLE IF NOT EXISTS events(
         id TEXT PRIMARY KEY,
@@ -72,8 +81,7 @@ class DatabaseHelper {
     ''');
   }
 
-  // --- MÉTODOS PARA EVENTOS ---
-
+  // Métodos estáticos para eventos (Calendario)
   static Future<int> insertEvent(Event event) async {
     final db = await database;
     return await db.insert('events', event.toMap(),

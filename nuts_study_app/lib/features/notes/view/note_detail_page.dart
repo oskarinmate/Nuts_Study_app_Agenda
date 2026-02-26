@@ -1,16 +1,14 @@
-// features/notes/view/note_detail_page.dart
 import 'package:flutter/material.dart';
-import 'package:nuts_study_app/core/services/pdf_service.dart';
 import 'package:provider/provider.dart';
 import '../../../data/models/note_model.dart';
 import '../provider/notes_provider.dart';
-// IMPORTANTE: Asegúrate de que la ruta a tu PdfService sea correcta
-
+import 'package:nuts_study_app/core/services/pdf_service.dart';
 
 class NoteDetailPage extends StatefulWidget {
   final Note? note;
+  final int? initialFolderId; // Para saber en qué carpeta guardar
 
-  const NoteDetailPage({super.key, this.note});
+  const NoteDetailPage({super.key, this.note, this.initialFolderId});
 
   @override
   State<NoteDetailPage> createState() => _NoteDetailPageState();
@@ -35,66 +33,49 @@ class _NoteDetailPageState extends State<NoteDetailPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(isEditing ? 'Editar nota' : 'Nueva nota'),
-        actions: isEditing
-            ? [
-                // 📄 BOTÓN PARA EXPORTAR A PDF
-                IconButton(
-                  icon: const Icon(Icons.picture_as_pdf),
-                  tooltip: 'Exportar a PDF',
-                  onPressed: () {
-                    // Usamos el servicio que creamos
-                    PdfService.exportNote(widget.note!);
-                  },
-                ),
-                IconButton(
-                  icon: const Icon(Icons.delete),
-                  onPressed: () => _showDeleteDialog(context),
-                ),
-              ]
-            : [],
+        actions: isEditing ? [
+          IconButton(
+            icon: const Icon(Icons.picture_as_pdf),
+            onPressed: () => PdfService.exportNote(widget.note!),
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete),
+            onPressed: () async {
+              await provider.deleteNote(widget.note!.id!);
+              Navigator.pop(context);
+            },
+          ),
+        ] : [],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            TextField(
-              autocorrect: true,
-              enableSuggestions: true,
-              textCapitalization: TextCapitalization.sentences,
-              smartDashesType: SmartDashesType.enabled,
-              smartQuotesType: SmartQuotesType.enabled,
-              keyboardType: TextInputType.text,
-              controller: titleCtrl,
-              decoration: const InputDecoration(labelText: 'Título'),
-            ),
-            const SizedBox(height: 12),
+            TextField(controller: titleCtrl, decoration: const InputDecoration(labelText: 'Título')),
             Expanded(
               child: TextField(
-                autocorrect: true,
-                enableSuggestions: true,
-                textCapitalization: TextCapitalization.sentences,
-                smartDashesType: SmartDashesType.enabled,
-                smartQuotesType: SmartQuotesType.enabled,
-                keyboardType: TextInputType.text,
                 controller: contentCtrl,
                 maxLines: null,
                 expands: true,
                 decoration: const InputDecoration(labelText: 'Contenido'),
               ),
             ),
-            const SizedBox(height: 12),
             ElevatedButton(
               onPressed: () async {
+                if (titleCtrl.text.isEmpty) return;
+
                 if (isEditing) {
                   await provider.updateNote(
                     widget.note!.id!,
                     titleCtrl.text,
                     contentCtrl.text,
+                    folderId: widget.note!.folderId, // Mantiene su materia
                   );
                 } else {
                   await provider.addNote(
                     titleCtrl.text,
                     contentCtrl.text,
+                    folderId: widget.initialFolderId, // Guarda en la materia donde estamos
                   );
                 }
                 Navigator.pop(context);
@@ -103,37 +84,6 @@ class _NoteDetailPageState extends State<NoteDetailPage> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  void _showDeleteDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Eliminar nota'),
-        content: const Text(
-          '¿Estás seguro de que quieres eliminar esta nota?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () async {
-              final provider = context.read<NotesProvider>();
-              await provider.deleteNote(widget.note!.id!);
-
-              Navigator.pop(context); // cerrar modal
-              Navigator.pop(context); // volver a lista
-            },
-            child: const Text(
-              'Eliminar',
-              style: TextStyle(color: Colors.red),
-            ),
-          ),
-        ],
       ),
     );
   }

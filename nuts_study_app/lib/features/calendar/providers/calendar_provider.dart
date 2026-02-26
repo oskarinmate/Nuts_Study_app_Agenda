@@ -6,6 +6,7 @@ import '../../../core/services/notification_service.dart';
 class CalendarProvider extends ChangeNotifier {
   // Ahora usamos una lista plana, sqflite la prefiere así
   List<Event> _allEvents = [];
+  List<Event> get allEvents => _allEvents;
 
   CalendarProvider() {
     loadEvents(); // Cargamos los datos de SQLite al iniciar
